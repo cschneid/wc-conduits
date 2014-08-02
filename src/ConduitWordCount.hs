@@ -1,3 +1,8 @@
 module ConduitWordCount where
 
-import ConduitWordCount.Internal
+data Options = Options { countBytes      :: Bool
+                       , countWords      :: Bool
+                       , countLines      :: Bool
+                       , inputFiles      :: Maybe [FilePath]
+                       } deriving (Show)
+

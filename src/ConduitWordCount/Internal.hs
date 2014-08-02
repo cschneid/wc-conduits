@@ -1,3 +1,0 @@
-module ConduitWordCount.Internal
-    (
-    ) where

@@ -1,6 +1,7 @@
 module Main where
 
 import Options.Applicative
+import ConduitWordCount
 
 main :: IO ()
 main = execParser optionsWithHelp >>= print
@@ -8,12 +9,6 @@ main = execParser optionsWithHelp >>= print
   optionsWithHelp = info (helper <*> options)
       ( fullDesc
         <> header "Example wc clone written using Conduit" )
-
-data Options = Options { countBytes      :: Bool
-                       , countWords      :: Bool
-                       , countLines      :: Bool
-                       , inputFiles      :: Maybe [FilePath]
-                       } deriving (Show)
 
 options :: Parser Options
 options = Options
