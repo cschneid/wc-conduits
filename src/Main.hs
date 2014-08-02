@@ -4,7 +4,7 @@ import Options.Applicative
 import ConduitWordCount
 
 main :: IO ()
-main = execParser optionsWithHelp >>= print
+main = execParser optionsWithHelp >>= runWordCount
   where
   optionsWithHelp = info (helper <*> options)
       ( fullDesc

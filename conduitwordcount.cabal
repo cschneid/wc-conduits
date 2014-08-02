@@ -25,6 +25,7 @@ Library
   GHC-Options:          -Wall
   Exposed-Modules:      ConduitWordCount
   Build-Depends:        base >= 4 && < 5
+                      , conduit-extra
 
 Test-Suite spec
   Type:                 exitcode-stdio-1.0

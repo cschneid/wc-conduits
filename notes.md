@@ -17,3 +17,18 @@ After each new dependency is added to cabal:
 
 1. `cabal install --only-dependencies`
 2. restart the cabal repl
+
+
+Optparse Applicative's github docs are pretty good - https://github.com/pcapriotti/optparse-applicative
+
+
+
+The conduit library itself, is very bare-bones, with only the mechanics of
+hooking them up. This seems to be a new extraction, as the tutorials out there
+keep referencing modules in Conduit that hackage doesn't show on the newest
+version.
+
+I used conduit-extra which has some handy file reading abilities that the core
+lib didn't.
+
+
