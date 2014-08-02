@@ -13,6 +13,7 @@ Executable cwc
   GHC-Options:          -Wall
   Build-Depends:        base >= 4 && < 5
                       , conduitwordcount
+                      , optparse-applicative
   main-is:              Main.hs
   default-extensions:
     GeneralizedNewtypeDeriving
