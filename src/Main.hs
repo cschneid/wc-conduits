@@ -4,7 +4,9 @@ import Options.Applicative
 import ConduitWordCount
 
 main :: IO ()
-main = execParser optionsWithHelp >>= runWordCount
+main = do
+  opts <- execParser optionsWithHelp
+  runWordCount opts
   where
   optionsWithHelp = info (helper <*> options)
       ( fullDesc
@@ -16,7 +18,6 @@ options = Options
       <*> wordsOption
       <*> linesOption
       <*> filesOption
-
 
 bytesOption, wordsOption, linesOption :: Parser Bool
 filesOption :: Parser (Maybe [FilePath])
