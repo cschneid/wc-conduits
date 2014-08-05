@@ -38,7 +38,7 @@ runWordCount opts = runResourceT $  input opts
                                                     <* ZipConduit countLinesC
                     -- where allCountsC = sequenceConduits [ countByteC, countWordsC, countLines ]
 
-input :: (MonadResource m) => Options -> Source m ByteString
+input :: Options -> Source (ResourceT IO) ByteString
 input opts = case inputFiles opts of
                Just files -> sourceFile $ Prelude.head files
                Nothing    -> sourceHandle stdin
