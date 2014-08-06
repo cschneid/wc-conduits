@@ -1,13 +1,18 @@
 module ConduitWordCount where
 
+-- ConduitM                      i  o    m r -- Input, Output, Monad, Final Result
+-- type Source m a    = ConduitM () a    m () -- no meaningful input or return value
+-- type Conduit a m b = ConduitM a  b    m () -- no meaningful return value
+-- type Sink a m b    = ConduitM a  Void m b -- no meaningful output value
+
 import Prelude hiding (length, filter, concat)
 import Data.Monoid
 import Data.Conduit
 import Data.Conduit.Binary
--- import Data.Conduit.List
+{- import Data.Conduit.List as CL -}
 import Control.Monad.Trans.Resource
 import Control.Monad.IO.Class
-import Data.ByteString hiding (map, putStrLn, any, count)
+import Data.ByteString hiding (map, putStrLn, any, count, replicate)
 import qualified Data.ByteString.Char8 as BW hiding (map, putStrLn, pack)
 import System.IO
 import Control.Applicative
@@ -29,39 +34,50 @@ instance Monoid Counts where
     Counts (b1 <> b2) (w1 <> w2) (l1 <> l2)
 
 runWordCount :: Options -> IO ()
-runWordCount opts = runResourceT $  input opts
-                                $=  allCountsC
-                                $$  showCountsC
-                                =$  output
-                    where allCountsC = getZipConduit $ ZipConduit countByteC
-                                                    <* ZipConduit countWordsC
-                                                    <* ZipConduit countLinesC
-                    -- where allCountsC = sequenceConduits [ countByteC, countWordsC, countLines ]
+runWordCount opts = do
+  let i = input opts
+  runResourceT $   i
+               $=  allCountsC
+               $=  combineCountsC
+               $=  showCountsC
+               $$  output
+  where allCountsC = getZipConduit $ ZipConduit countByteC
+                                  <* ZipConduit countWordsC
+                                  <* ZipConduit countLinesC
 
 input :: Options -> Source (ResourceT IO) ByteString
 input opts = case inputFiles opts of
                Just files -> sourceFile $ Prelude.head files
                Nothing    -> sourceHandle stdin
 
-output :: ConduitM String o (ResourceT IO) ()
+output :: Conduit String (ResourceT IO) o
 output = awaitForever (liftIO . putStrLn)
 
-countByteC :: ConduitM ByteString Counts (ResourceT IO) ()
+countByteC :: Conduit ByteString (ResourceT IO) Counts
 countByteC = awaitForever (yield . makeNewCount)
   where makeNewCount bs  = Counts (count bs) mempty mempty
         count = Sum . length
 
-countWordsC :: ConduitM ByteString Counts (ResourceT IO) ()
+countWordsC :: Conduit ByteString (ResourceT IO) Counts
 countWordsC = awaitForever (yield . makeNewCount)
   where makeNewCount bs  = Counts mempty (count bs) mempty
         count = Sum . length . BW.filter isSpace
         isSpace c = (c == ' ') || (c == '\t')
 
-countLinesC :: ConduitM ByteString Counts (ResourceT IO) ()
+countLinesC :: Conduit ByteString (ResourceT IO) Counts
 countLinesC = awaitForever (yield . makeNewCount)
   where makeNewCount bs  = Counts mempty mempty (count bs)
         count = Sum . length . BW.filter isNewline
         isNewline = (== '\n')
+
+combineCountsC :: Conduit Counts (ResourceT IO) Counts
+combineCountsC = do
+  x <- await
+  y <- await
+  z <- await
+  case mconcat [x,y,z] of
+    Just result -> yield result
+    Nothing     -> return ()
 
 showCountsC :: ConduitM Counts String (ResourceT IO) ()
 showCountsC = awaitForever (yield . show)
