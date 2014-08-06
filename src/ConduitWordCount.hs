@@ -16,6 +16,7 @@ import Data.ByteString hiding (map, putStrLn, any, count, replicate)
 import qualified Data.ByteString.Char8 as BW hiding (map, putStrLn, pack)
 import System.IO
 import Control.Applicative
+import Control.Monad (forM_)
 
 data Options = Options { countBytes      :: Bool
                        , countWords      :: Bool
@@ -34,21 +35,21 @@ instance Monoid Counts where
     Counts (b1 <> b2) (w1 <> w2) (l1 <> l2)
 
 runWordCount :: Options -> IO ()
-runWordCount opts = do
-  let i = input opts
-  runResourceT $   i
-               $=  allCountsC
-               $=  combineCountsC
-               $=  showCountsC
-               $$  output
+runWordCount opts =
+  forM_ (inputs opts) (\i ->
+    runResourceT $ i
+                $= allCountsC
+                $= combineCountsC
+                $= showCountsC
+                $$ output)
   where allCountsC = getZipConduit $ ZipConduit countByteC
                                   <* ZipConduit countWordsC
                                   <* ZipConduit countLinesC
 
-input :: Options -> Source (ResourceT IO) ByteString
-input opts = case inputFiles opts of
-               Just files -> sourceFile $ Prelude.head files
-               Nothing    -> sourceHandle stdin
+inputs :: Options -> [Source (ResourceT IO) ByteString]
+inputs opts = case inputFiles opts of
+               Just files -> map sourceFile files
+               Nothing    -> [ sourceHandle stdin ]
 
 output :: Conduit String (ResourceT IO) o
 output = awaitForever (liftIO . putStrLn)
